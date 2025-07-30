@@ -136,7 +136,7 @@ pF_simulator(m=4,n=100)
 F_simulator<- function(m,k=13,n,sd){
   A <- matrix(rnorm((k)^2,sd=sd), k, k)
   Sigma_eps= t(A) %*% A
-  pF_sim=pF_simulator(m=4,n=100)
+  pF_sim=pF_simulator(m=m,n=n)
   pF=pF_sim$pF
   Hs=pF_sim$H
   BH_noise=(Hs$basis)%*%t(rmvnorm(n,rep(0,k),Sigma_eps))
@@ -153,12 +153,12 @@ F_simulator<- function(m,k=13,n,sd){
   matplot(domain,nG,type="l",main="Noisy mixtures")
   
   library(rgl)
-  plot3D(t(p))
+  plot3D(t(pF_sim$p))
   
   return(list(pF=pF_sim,nF=nF,pG=pG,nG=nG))
 }
 
 
-F_simulator(m=4,n=100,sd=0.05)
+F_simulator(m=3,n=100,sd=0.05)
 
 
