@@ -10,17 +10,32 @@
 
 source("clr2density.R")
 
+domain=seq(0,1,length.out=100)
+w=diff(domain[1:2])
 
-
-beta2coef=function(a,b,domain){
+simcoef=function(domain,B=4){
 library(FDboost)
-beta=rbeta(10000,a,b)
-histbeta=hist(beta,breaks=10,plot=F)
+
+a=runif(1,0.5,5)
+b=runif(1,0.5,5)
+beta=rbeta(1000,a,b)
+histbeta=hist(beta,breaks=seq(0,1,0.1),plot=F)
 wbin=1/length(histbeta$counts)
-counts=ifelse(histbeta$counts==0,1,histbeta$counts)
+counts=histbeta$counts
+  
+for(l in 1:(B-1)){
+a=runif(1,0.5,5)
+b=runif(1,0.5,5)
+beta=rbeta(1000,a,b)
+histbeta=hist(beta,breaks=seq(0,1,0.1),plot=F)
+wbin=1/length(histbeta$counts)
+counts=counts+histbeta$counts
+}
 
-
-ddens=histbeta$counts/((10000+sum(histbeta$counts==0))*wbin)
+sum0=sum(counts==0)
+counts=ifelse(counts==0,1,counts)
+tot_counts=1000*B+sum0
+ddens=counts/(tot_counts*wbin)
 dclrs=list(x=matrix(clr(ddens,w=wbin,inverse=F),1,length(histbeta$mids)),t=histbeta$mids)
 
 cclrs=FDboost(x~1, 
@@ -42,18 +57,13 @@ get_basis_new <- extract(new_basis, "design", asmatrix = TRUE)
 return(list(coefs=coefs,basis=get_basis_new))
 }
 
-H_simulator <- function(m, k){
+H_simulator <- function(m,k=13){
   library(FDboost)
   library(mvtnorm)
   mat <- matrix(0, k, m)
   for (j in 1:m) {
-  S=runif(1,1,4)
-    for(s in 1:S){
-      a=runif(1,0.1,5)
-      b=runif(1,0.1,5)
-      beta_sample=beta2coef(a,b,domain)
-      mat[,j]=mat[,j]+beta_sample$coef
-    }
+    beta_sample=simcoef(domain, B=4)
+    mat[,j]=beta_sample$coef
   }
   return(list(coefs=mat,basis=beta_sample$basis))
 }
@@ -111,21 +121,19 @@ return(list(mu=mu_p,sigma=Sigma_p,pilr=p_ilr,p=p))
 #######################################
 
 
-pF_simulator<- function(m,k=13,n){
-H_sample=H_simulator(m,k=13) #k x m
-p_sample=p_simulator(m,n)$p # m x n
+pF_simulator<- function(m,n){
+H_sample=H_simulator(m) #k x m
+psim=p_simulator(m,n)
+pp=psim$p # m x n
 
 vert=(H_sample$basis)%*%(H_sample$coefs) # 100 x k
-pF=as.matrix(vert%*%as.matrix(p_sample)) # k x n
+pF=as.matrix(vert%*%as.matrix(pp)) # k x n
 
 par(mfrow=c(1,2))
 matplot(domain,vert,type="l")
 matplot(domain,(pF),type="l")
-return(list(pF=pF,vert=vert, H=H_sample,p=p_sample))
+return(list(pF=pF,vert=vert, H=H_sample,p=psim))
 }
-
-
-pF_simulator(m=4,n=100)
 
 
 #######################################
@@ -152,13 +160,14 @@ F_simulator<- function(m,k=13,n,sd){
   matplot(domain,pG,type="l",main="Pure mixtures")
   matplot(domain,nG,type="l",main="Noisy mixtures")
   
-  library(rgl)
-  plot3D(t(pF_sim$p))
-  
-  return(list(pF=pF_sim,nF=nF,pG=pG,nG=nG))
+  return(list(pF=pF_sim,nF=nF,pG=pG,nG=nG,Sigma_eps=Sigma_eps))
 }
 
 
-F_simulator(m=3,n=100,sd=0.05)
+F_sample=F_simulator(m=4,n=100,sd=0.02)
+
+
+
+
 
 
