@@ -1,3 +1,12 @@
+library(FDboost)
+
+source("BHM_simultor.R")
+source("Sampling_p.R")
+source("clr2density.R")
+source("coef_function.R")
+source("update_functions.R")
+
+
 ############## examples #################
 
 F_sample=F_simulator(m=3,n=150,sd=0.01)
@@ -81,3 +90,35 @@ fig <- fig %>% layout(
 )
 
 fig
+
+
+###############################################################################
+
+f_coef=coef_f(f)
+
+H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=t(f_coef[sample(1:(dim(f_coef)[1]),3),]))
+
+get_basis=F_sample$pF$H$basis
+
+x11()
+par(mfrow=c(4,2))
+verteces_display(H, get_basis)
+verteces_display(H_old, get_basis)
+verteces_display(H_new, get_basis)
+
+
+H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_new)
+verteces_display(H_new, get_basis)
+
+x11()
+par(mfrow=c(1,2))
+H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_new)
+verteces_display(H_new, get_basis)
+
+H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_new)
+verteces_display(H_new, get_basis)
+
+x11()
+par(mfrow=c(1,2))
+H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_new)
+verteces_display(H_new, get_basis)

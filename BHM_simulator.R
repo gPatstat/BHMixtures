@@ -78,7 +78,6 @@ verteces_display <- function(H, get_basis){
   #clr basis dim: 100 x k
   clrs=get_basis%*%H
   densities=clr2density(clrs,w=w)
-  par(mfrow=c(1,2))
   matplot(domain,clrs,type="l",main="clrs")
   matplot(domain,densities,type="l",main="densities")
 }

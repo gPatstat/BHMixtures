@@ -35,7 +35,6 @@ importance_sampling_p=function(f0,Sigma_eps, H, mu_p, Sigma_p,B=100){
   post_prob=posterior_builder(f0,Sigma_eps, H, mu_p, Sigma_p)
   mu_opt=optim(par=mu_p,fn=post_prob)$par
   Hess=numDeriv::hessian(post_prob,mu_opt)
-  print(Hess)
   wgt=numeric(B)
   x=matrix(NA,B,length(mu_p))
   for(b in 1:B){
