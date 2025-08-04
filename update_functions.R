@@ -6,7 +6,7 @@
 
 # f_coef here is the matrix of coefficients [n x k]
 
-update_H=function(f_coef,Sigma_eps,mu_p,Sigma_p,H_old,B=1000){
+update_H=function(f_coef,Sigma_eps, H_old, mu_p, Sigma_p,B=1000){
   n=dim(f_coef)[1]
   k=dim(f_coef)[2]
   m=length(mu_p)+1
@@ -31,7 +31,7 @@ update_H=function(f_coef,Sigma_eps,mu_p,Sigma_p,H_old,B=1000){
 
 
 
-update_mu_p=function(f_coef,Sigma_eps,mu_p_old,Sigma_p,H,B=1000){
+update_mu_p=function(f_coef,Sigma_eps, H, mu_p_old, Sigma_p,B=1000){
   n=dim(f_coef)[1]
   k=dim(f_coef)[2]
   m=length(mu_p)+1
@@ -49,7 +49,7 @@ update_mu_p=function(f_coef,Sigma_eps,mu_p_old,Sigma_p,H,B=1000){
   return(m0/sumW)
 }
 
-update_Sigma_p=function(f_coef,Sigma_eps,mu_p,Sigma_p_old,H,B=1000){
+update_Sigma_p=function(f_coef,Sigma_eps, H, mu_p, Sigma_p_old,B=1000){
   n=dim(f_coef)[1]
   k=dim(f_coef)[2]
   m=length(mu_p)+1
@@ -67,7 +67,7 @@ update_Sigma_p=function(f_coef,Sigma_eps,mu_p,Sigma_p_old,H,B=1000){
   return(sigma0/sumW)
 }
 
-update_Sigma_eps=function(f_coef,Sigma_eps_old,mu_p,Sigma_p,H,B=1000){
+update_Sigma_eps=function(f_coef,Sigma_eps, H, mu_p, Sigma_p_old,B=1000){
   n=dim(f_coef)[1]
   k=dim(f_coef)[2]
   m=length(mu_p)+1
