@@ -69,7 +69,7 @@ H_simulator <- function(m,k=13){
 }
 
 
-verteces_display <- function(H, get_basis){
+verteces_display <- function(H, get_basis,add=F){
   k=dim(H)[1]
   library(FDboost)
   library(MASS)
@@ -78,8 +78,7 @@ verteces_display <- function(H, get_basis){
   #clr basis dim: 100 x k
   clrs=get_basis%*%H
   densities=clr2density(clrs,w=w)
-  matplot(domain,clrs,type="l",main="clrs")
-  matplot(domain,densities,type="l",main="densities")
+  matplot(domain,densities,type="l",main="densities",add=add)
 }
 
 
@@ -106,7 +105,10 @@ Sigma_p= t(A) %*% A
 
 library(MASS)
 p_ilr=rmvnorm(n,mu_p,Sigma_p)
-p=apply(p_ilr,1,ilrInv)
+p=matrix(0,m,n)
+for(i in 1:n){
+  p[,i]=ilrInv(p_ilr[i,])
+}
 return(list(mu=mu_p,sigma=Sigma_p,pilr=p_ilr,p=p))
 }
 
@@ -125,13 +127,9 @@ H_sample=H_simulator(m) #k x m
 psim=p_simulator(m,n)
 pp=psim$p # m x n
 
-vert=(H_sample$basis)%*%(H_sample$coefs) # 100 x k
-pF=as.matrix(vert%*%as.matrix(pp)) # k x n
+pF=as.matrix(H_sample$coefs%*%as.matrix(pp)) # k x n
 
-par(mfrow=c(1,2))
-matplot(domain,vert,type="l")
-matplot(domain,(pF),type="l")
-return(list(pF=pF,vert=vert, H=H_sample,p=psim))
+return(list(pF=pF, H=H_sample,p=psim))
 }
 
 
@@ -141,25 +139,17 @@ return(list(pF=pF,vert=vert, H=H_sample,p=psim))
 
 
 F_simulator<- function(m,k=13,n,sd){
-  A <- matrix(rnorm((k)^2,sd=sd), k, k)
-  Sigma_eps= t(A) %*% A
+  #A <- matrix(rnorm((k)^2,sd=sd), k, k)
+  #Sigma_eps= t(A) %*% A
+  Sigma_eps=diag(sd,k)
   pF_sim=pF_simulator(m=m,n=n)
   pF=pF_sim$pF
-  Hs=pF_sim$H
-  BH_noise=(Hs$basis)%*%t(rmvnorm(n,rep(0,k),Sigma_eps))
+  coef_noise=t(rmvnorm(n,rep(0,k),Sigma_eps))
+
   
-  nF=pF+BH_noise
+  nF=pF+coef_noise
   
-  Gvert=clr2density(pF_sim$vert,w)
-  pG=clr2density(pF,w)
-  nG=clr2density(nF,w)
-  
-  par(mfrow=c(1,3))
-  matplot(domain,Gvert,type="l",main="Vertices")
-  matplot(domain,pG,type="l",main="Pure mixtures")
-  matplot(domain,nG,type="l",main="Noisy mixtures")
-  
-  return(list(pF=pF_sim,nF=nF,pG=pG,nG=nG,Sigma_eps=Sigma_eps))
+  return(list(pF=pF_sim,nF=nF,Sigma_eps=Sigma_eps,coef_noise=coef_noise))
 }
 
 

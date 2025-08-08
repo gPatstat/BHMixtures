@@ -5,41 +5,55 @@ source("Sampling_p.R")
 source("clr2density.R")
 source("coef_function.R")
 source("update_functions.R")
+source("EM_updating.R")
 
 
 ############## examples #################
 
-F_sample=F_simulator(m=3,n=150,sd=0.01)
+m=3
+n=150
+
+F_sample=F_simulator(m=m,n=n,sd=0.01)
 
 Sigma_eps=F_sample$Sigma_eps
 Sigma_p=F_sample$pF$p$sigma
 mu_p=F_sample$pF$p$mu
 H=F_sample$pF$H$coefs
-f=F_sample$nF
+f_coef=F_sample$nF #coefficients
+
+get_basis=F_sample$pF$H$basis
+
+
+x11()
+par(mfrow=c(1,2))
+image(Sigma_eps)
+image(cov(t(F_sample$coef_noise)))
+
+
+x11()
+par(mfrow=c(1,2))
+verteces_display(H%*%(F_sample$pF$p$p),get_basis)
+verteces_display(f_coef,get_basis)
 
 
 ##################################################################
 
-id=1
-dclrs=list(x=t(f[,id]),t=domain)
 
-cclrs=FDboost(x~1, 
-              #use bbsc() in time formula to ensure integrate-to-zero constraint 
-              timeformula= ~bbsc(t,df=4, 
-                                 knots=10,
-                                 boundary.knots=c(0,1),
-                                 degree=3,
-                                 lambda=10^2),
-              data=dclrs,offset=0, 
-              control=boost_control(mstop=100))
-
-coefs=as.numeric(cclrs$coef(which=1)[[1]])
-
-##################################################################
-
+coefs=f_coef[,id]
 
 imps=importance_sampling_p(coefs,Sigma_eps, H, mu_p, Sigma_p,B=100)
-imps$wgt
+
+wgt_scaled <- imps$wgt 
+
+# Create a color vector with transparency (using rgb)
+# Assuming 2D projections for plotting
+library(scales)
+colors <- rgb(0, 0, 1, alpha = wgt_scaled)  # blue points with varying alpha
+
+# Plot
+x11()
+plot(imps$proportions, col = colors, pch = 16, xlab = "ILR 1", ylab = "ILR 2", main = "Importance Samples",xlim=c(-10,10),ylim=c(-10,10))
+points(mu_p[1], mu_p[2], col = "red", pch = 19, cex = 1.5)  # prior mean in red
 
 
 library(plotly)
@@ -68,7 +82,12 @@ fig <- fig %>% add_trace(
 fig <- fig %>% add_trace(
   x = pts_red[,1], y = pts_red[,2], z = pts_red[,3],
   type = "scatter3d", mode = "markers",
-  marker = list(color = "red", size = 4),
+  marker = list(
+    color = wgt_scaled,
+    colorscale = list(c(0, 'rgb(255,200,200)'), c(1, 'rgb(255,0,0)')),
+    colorbar = list(title = "Weight"),
+    size = 4
+  ),
   name = "Posterior samples"
 )
 
@@ -94,7 +113,7 @@ fig
 
 ###############################################################################
 
-f_coef=coef_f(f)
+
 
 H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=t(f_coef[sample(1:(dim(f_coef)[1]),3),]))
 
@@ -107,18 +126,28 @@ verteces_display(H_old, get_basis)
 verteces_display(H_new, get_basis)
 
 
-H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_new)
-verteces_display(H_new, get_basis)
+#################################################################
+
+pca=princomp(t(f_coef))
+H0=(f_coef[,sample(1:150,3)])
+sd0=pca$sdev[m+1]
 
 x11()
-par(mfrow=c(1,2))
-H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_new)
-verteces_display(H_new, get_basis)
+verteces_display(H0,get_basis)
 
-H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_new)
-verteces_display(H_new, get_basis)
+EM_sample=EM_updating(f_coef, Sigma_eps, H , rep(0,m-1), diag(1,m-1,m-1), B=10)
 
 x11()
-par(mfrow=c(1,2))
-H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_new)
-verteces_display(H_new, get_basis)
+par(mfrow=c(4,2))
+verteces_display(H, get_basis)
+verteces_display(EM_sample$H, get_basis)
+
+
+
+mu_p
+EM_sample$mu_p
+
+
+
+Sigma_p
+EM_sample$Sigma_p
