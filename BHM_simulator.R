@@ -23,14 +23,14 @@ histbeta=hist(beta,breaks=seq(0,1,0.1),plot=F)
 wbin=1/length(histbeta$counts)
 counts=histbeta$counts
   
-for(l in 1:(B-1)){
-a=runif(1,0.5,5)
-b=runif(1,0.5,5)
-beta=rbeta(1000,a,b)
-histbeta=hist(beta,breaks=seq(0,1,0.1),plot=F)
-wbin=1/length(histbeta$counts)
-counts=counts+histbeta$counts
-}
+#for(l in 1:(B-1)){
+#a=runif(1,0.5,5)
+#b=runif(1,0.5,5)
+#beta=rbeta(1000,a,b)
+#histbeta=hist(beta,breaks=seq(0,1,0.1),plot=F)
+#wbin=1/length(histbeta$counts)
+#counts=counts+histbeta$counts
+#}
 
 sum0=sum(counts==0)
 counts=ifelse(counts==0,1,counts)
@@ -54,7 +54,11 @@ coefs=as.numeric(cclrs$coef(which=1)[[1]])
 new_basis <- bbsc(domain, df = 4, knots = 10, boundary.knots = c(0, 1), degree = 3,lambda=10^2)
 # Extract design matrix from the new basis
 get_basis_new <- extract(new_basis, "design", asmatrix = TRUE)
-return(list(coefs=coefs,basis=get_basis_new))
+basis_dd <- extract(new_basis, "design", derivative = 2, asmatrix = TRUE)  # (200 x nbasis) matrix
+
+D <- t(basis_dd) %*% basis_dd * w  # approximate integral
+
+return(list(coefs=coefs,basis=get_basis_new, D=D))
 }
 
 H_simulator <- function(m,k=13){
@@ -65,7 +69,7 @@ H_simulator <- function(m,k=13){
     beta_sample=simcoef(domain, B=4)
     mat[,j]=beta_sample$coef
   }
-  return(list(coefs=mat,basis=beta_sample$basis))
+  return(list(coefs=mat,basis=beta_sample$basis, D=beta_sample$D))
 }
 
 
@@ -148,8 +152,8 @@ F_simulator<- function(m,k=13,n,sd){
 
   
   nF=pF+coef_noise
-  
-  return(list(pF=pF_sim,nF=nF,Sigma_eps=Sigma_eps,coef_noise=coef_noise))
+    
+  return(list(pF=pF_sim,nF=nF,Sigma_eps=Sigma_eps,coef_noise=coef_noise,basis=pF_sim$H$basis,D=pF_sim$H$D))
 }
 
 

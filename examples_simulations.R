@@ -20,6 +20,7 @@ Sigma_p=F_sample$pF$p$sigma
 mu_p=F_sample$pF$p$mu
 H=F_sample$pF$H$coefs
 f_coef=F_sample$nF #coefficients
+D=F_sample$pF$H$D
 
 get_basis=F_sample$pF$H$basis
 
@@ -113,9 +114,9 @@ fig
 
 ###############################################################################
 
-
-
-H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=t(f_coef[sample(1:(dim(f_coef)[1]),3),]))
+H_old=(f_coef[,sample(1:(dim(f_coef)[1]),3)])
+H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H,D=D,lambda=100)
+H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_old,D=D,lambda=0)
 
 get_basis=F_sample$pF$H$basis
 
@@ -125,25 +126,42 @@ verteces_display(H, get_basis)
 verteces_display(H_old, get_basis)
 verteces_display(H_new, get_basis)
 
+H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_new,D=D,lambda=0)
+verteces_display(H_new, get_basis)
 
 #################################################################
 
+k=13
 pca=princomp(t(f_coef))
-H0=(f_coef[,sample(1:150,3)])
+#H0=(f_coef[,sample(1:150,3)])
+H0=pca$loadings[,1:m]
 sd0=pca$sdev[m+1]
 
 x11()
 verteces_display(H0,get_basis)
 
-EM_sample=EM_updating(f_coef, Sigma_eps, H , rep(0,m-1), diag(1,m-1,m-1), B=10)
+EM_sample=EM_updating(f_coef, diag(sd0,k,k), H0 , rep(0,m-1), diag(1,m-1,m-1), B=20,D=D)
 
 x11()
-par(mfrow=c(4,2))
-verteces_display(H, get_basis)
+par(mfrow=c(1,2))
+verteces_display((H), get_basis)
 verteces_display(EM_sample$H, get_basis)
 
 
+sample_p=mvrnorm(150,EM_sample$mu_p,EM_sample$Sigma_p)
+sample_err=mvrnorm(150,rep(0,k),EM_sample$Sigma_eps)
 
+sample_p=apply(sample_p,1,ilrInv)
+EM_H=EM_sample$H
+
+
+sample_from_EM=t(sample_p)%*%(t(EM_sample$H))
+
+
+x11()
+par(mfrow=c(1,2))
+verteces_display(F_sample$pF$pF,get_basis)
+verteces_display(t(sample_from_EM),get_basis)
 mu_p
 EM_sample$mu_p
 

@@ -6,13 +6,16 @@
 
 # f_coef here is the matrix of coefficients [n x k]
 
-update_H=function(f_coef,Sigma_eps, H_old, mu_p, Sigma_p,B=100){
+update_H=function(f_coef,Sigma_eps, H_old, mu_p, Sigma_p,B=100, lambda=10^-4,D){
   n=dim(f_coef)[2]
   k=dim(f_coef)[1]
   m=length(mu_p)+1
   W=numeric(B)
-  sm=matrix(0,k,m)
-  ptp=matrix(0,m,m)
+  C=matrix(0,k,m)
+  A_r=matrix(0,m,m)
+  A_l=2*lambda*(Sigma_eps%*%D)
+   # print(dim(A_l))
+   # print(dim(A_r))
   for(i in 1:n){
     f0=f_coef[,i] # [k x 1]
     sample_prop=importance_sampling_p(f0,Sigma_eps, H_old, mu_p, Sigma_p,B=B)
@@ -22,12 +25,18 @@ update_H=function(f_coef,Sigma_eps, H_old, mu_p, Sigma_p,B=100){
     X=sample_prop$proportions
     for (b in 1:B){
       p_x=as.numeric(ilrInv(X[b,]))
-      sm=sm+W[b]*f0%*%t(p_x) # [k x 1]%*%[1 x m]=[k x m]
-      ptp=ptp+W[b]*p_x%*%t(p_x) # [m x 1]%*%[1 x m]=[m x m]
+      C=C+W[b]*f0%*%t(p_x) # [k x 1]%*%[1 x m]=[k x m]
+      A_r=A_r+W[b]*p_x%*%t(p_x) # [m x 1]%*%[1 x m]=[m x m]
+
     }
     }
   }
-  return(sm%*%solve(ptp))
+  vec_C=matrix(C,k*m,1,byrow=F)
+  den=-diag(m)%x%A_l+t(A_r)%x%diag(k)
+  vec_solution=solve(den)%*%vec_C
+  solution=matrix(vec_solution,k,m,byrow=F)
+
+  return(solution)
 }
 
 
