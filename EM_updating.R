@@ -1,10 +1,10 @@
 
 
 
-EM_updating=function(f_coef,Sigma_eps0, H0, mu_p0, Sigma_p0,B=100,D){
+EM_updating=function(f_coef,Sigma_eps0, H0, mu_p0, Sigma_p0,B=100,D,lambda=10){
   for(b in 1:B){
     Sigma_eps0=update_Sigma_eps(f_coef=f_coef,Sigma_eps0, H0, mu_p0, Sigma_p0)
-    H0=update_H(f_coef=f_coef,Sigma_eps0, H0, mu_p0, Sigma_p0,D=D)
+    H0=update_H(f_coef=f_coef,Sigma_eps0, H0, mu_p0, Sigma_p0,D=D,lambda=lambda)
     mu_p0=update_mu_p(f_coef=f_coef,Sigma_eps0, H0, mu_p0, Sigma_p0)
     Sigma_p0=update_Sigma_p(f_coef=f_coef,Sigma_eps0, H0, mu_p0, Sigma_p0)
     print(b)
