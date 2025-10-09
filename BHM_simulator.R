@@ -15,22 +15,25 @@ w=diff(domain[1:2])
 
 simcoef=function(domain,B=4){
 library(FDboost)
+  
+multin=rmultinom(1000,B,1/B)
 
-a=runif(1,0.5,5)
-b=runif(1,0.5,5)
-beta=rbeta(1000,a,b)
+a=runif(1,0.05,10)
+b=runif(1,0.05,10)
+beta=rbeta(multin[1],a,b)
 histbeta=hist(beta,breaks=seq(0,1,0.1),plot=F)
 wbin=1/length(histbeta$counts)
 counts=histbeta$counts
+
   
-#for(l in 1:(B-1)){
-#a=runif(1,0.5,5)
-#b=runif(1,0.5,5)
-#beta=rbeta(1000,a,b)
-#histbeta=hist(beta,breaks=seq(0,1,0.1),plot=F)
-#wbin=1/length(histbeta$counts)
-#counts=counts+histbeta$counts
-#}
+for(l in 1:(B-1)){
+a=runif(1,0.5,5)
+b=runif(1,0.5,5)
+beta=rbeta(multin[l+1],a,b)
+histbeta=hist(beta,breaks=seq(0,1,0.1),plot=F)
+wbin=1/length(histbeta$counts)
+counts=counts+histbeta$counts
+}
 
 sum0=sum(counts==0)
 counts=ifelse(counts==0,1,counts)

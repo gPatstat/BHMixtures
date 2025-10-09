@@ -11,7 +11,7 @@ source("EM_updating.R")
 ############## examples #################
 
 m=3
-n=150
+n=500
 
 F_sample=F_simulator(m=m,n=n,sd=0.01)
 
@@ -50,12 +50,6 @@ wgt_scaled <- imps$wgt
 # Assuming 2D projections for plotting
 library(scales)
 colors <- rgb(0, 0, 1, alpha = wgt_scaled)  # blue points with varying alpha
-
-# Plot
-x11()
-plot(imps$proportions, col = colors, pch = 16, xlab = "ILR 1", ylab = "ILR 2", main = "Importance Samples",xlim=c(-10,10),ylim=c(-10,10))
-points(mu_p[1], mu_p[2], col = "red", pch = 19, cex = 1.5)  # prior mean in red
-
 
 library(plotly)
 
@@ -115,8 +109,8 @@ fig
 ###############################################################################
 
 H_old=(f_coef[,sample(1:(dim(f_coef)[1]),3)])
-H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H,D=D,lambda=100)
-H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_old,D=D,lambda=0)
+H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_old,D=D,lambda=100)
+H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_new,D=D,lambda=100)
 
 get_basis=F_sample$pF$H$basis
 
@@ -140,7 +134,7 @@ sd0=pca$sdev[m+1]
 x11()
 verteces_display(H0,get_basis)
 
-EM_sample=EM_updating(f_coef, diag(sd0,k,k), H0 , rep(0,m-1), diag(1,m-1,m-1), B=20,D=D)
+EM_sample=EM_updating(f_coef, diag(sd0,k,k), H0 , rep(0,m-1), diag(1,m-1,m-1), B=20,D=D,lambda=100)
 
 x11()
 par(mfrow=c(1,2))

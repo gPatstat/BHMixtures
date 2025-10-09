@@ -32,7 +32,11 @@ update_H=function(f_coef,Sigma_eps, H_old, mu_p, Sigma_p,B=100, lambda=10^-4,D){
     }
   }
   vec_C=matrix(C,k*m,1,byrow=F)
+<<<<<<< HEAD
   den=t(A_r)%x%diag(k)-diag(m)%x%A_l
+=======
+  den=+diag(m)%x%A_l+t(A_r)%x%diag(k)
+>>>>>>> c8b6a742120f12daa178d900b06ea630477656c5
   vec_solution=solve(den)%*%vec_C
   solution=matrix(vec_solution,k,m,byrow=F)
 
