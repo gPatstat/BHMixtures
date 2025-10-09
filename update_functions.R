@@ -60,7 +60,7 @@ update_mu_p=function(f_coef,Sigma_eps, H, mu_p_old, Sigma_p,B=100){
   return((mu0/sumW))
 }
 
-update_Sigma_p=function(f_coef,Sigma_eps, H, mu_p, Sigma_p_old,lambda=10^-2,B=100){
+update_Sigma_p=function(f_coef,Sigma_eps, H, mu_p, Sigma_p_old,lambda=100,B=100){
   n=dim(f_coef)[2]
   k=dim(f_coef)[1]
   m=length(mu_p)+1
@@ -74,10 +74,10 @@ update_Sigma_p=function(f_coef,Sigma_eps, H, mu_p, Sigma_p_old,lambda=10^-2,B=10
     sumW=sumW+sum(W)
     X=sample_prop$proportions # [B x (m-1)]
     for(b in 1:B){
-      sigma0=sigma0+((X[b,]-(mu_p))%*%t(X[b,]-(mu_p))+lambda*diag(1,m-1))*W[b] # colum vec %*% row vec
+      sigma0=sigma0+(X[b,]-mu_p)%*%t(X[b,]-mu_p)*W[b] # colum vec %*% row vec* scalar
     }
-  }
-  return(sigma0/sumW)
+  }##
+  return((sigma0/sumW)+lambda*diag(1,m-1))
 }
 
 update_Sigma_eps=function(f_coef,Sigma_eps_old, H, mu_p, Sigma_p,B=100){

@@ -13,70 +13,73 @@ source("clr2density.R")
 domain=seq(0,1,length.out=100)
 w=diff(domain[1:2])
 
-simcoef=function(domain,B=4){
+simcoef=function(domain,B=5){
 library(FDboost)
   
-multin=rmultinom(1000,B,1/B)
-
-a=runif(1,0.05,10)
-b=runif(1,0.05,10)
-beta=rbeta(multin[1],a,b)
-histbeta=hist(beta,breaks=seq(0,1,0.1),plot=F)
+#multin=rmultinom(10^5,B,1/B)
+multin=trunc(10^5/(2^(1:B))+1/2)
+  
+a=runif(1,10^-2,10^5)
+b=runif(1,10^-2,10^5)
+beta=rbeta(n=multin[1],a,b)
+histbeta=hist(beta,breaks=seq(0,1,0.001),plot=F)
 wbin=1/length(histbeta$counts)
 counts=histbeta$counts
 
   
 for(l in 1:(B-1)){
-a=runif(1,0.5,5)
-b=runif(1,0.5,5)
-beta=rbeta(multin[l+1],a,b)
-histbeta=hist(beta,breaks=seq(0,1,0.1),plot=F)
+a=runif(1,10^-2,10^5)
+beta=rbeta((multin[l+1]),a,b)
+histbeta=hist(beta,breaks=seq(0,1,0.001),plot=F)
 wbin=1/length(histbeta$counts)
 counts=counts+histbeta$counts
 }
 
 sum0=sum(counts==0)
 counts=ifelse(counts==0,1,counts)
-tot_counts=1000*B+sum0
+tot_counts=10^5*B+sum0
 ddens=counts/(tot_counts*wbin)
 dclrs=list(x=matrix(clr(ddens,w=wbin,inverse=F),1,length(histbeta$mids)),t=histbeta$mids)
 
 cclrs=FDboost(x~1, 
               #use bbsc() in time formula to ensure integrate-to-zero constraint 
               timeformula= ~bbsc(t,df=4, 
-                                 knots=10,
+                                 knots=20,
                                  boundary.knots=c(0,1),
                                  degree=3,
-                                 lambda=10^2),
+                                 lambda=10^5),
               data=dclrs,offset=0, 
               control=boost_control(mstop=100))
 t=histbeta$mids
-basis=bbsc(t,df=4,knots=10,boundary.knots=c(0,1),degree=3)
+basis=bbsc(t,df=4,knots=20,boundary.knots=c(0,1),degree=3)
 get_basis=extract(basis,"design",asmatrix=T) # 10 breaks x 11 elements of basis
 coefs=as.numeric(cclrs$coef(which=1)[[1]])
-new_basis <- bbsc(domain, df = 4, knots = 10, boundary.knots = c(0, 1), degree = 3,lambda=10^2)
+new_basis <- bbsc(domain, df = 4, knots = 20, boundary.knots = c(0, 1), degree = 3,lambda=10^5)
 # Extract design matrix from the new basis
 get_basis_new <- extract(new_basis, "design", asmatrix = TRUE)
 basis_dd <- extract(new_basis, "design", derivative = 2, asmatrix = TRUE)  # (200 x nbasis) matrix
 
 D <- t(basis_dd) %*% basis_dd * w  # approximate integral
 
+### Random amplification
+ampl=runif(1,0,10)
+coefs=ampl*coefs
 return(list(coefs=coefs,basis=get_basis_new, D=D))
 }
 
-H_simulator <- function(m,k=13){
+H_simulator <- function(m,k=23){
   library(FDboost)
   library(mvtnorm)
   mat <- matrix(0, k, m)
   for (j in 1:m) {
-    beta_sample=simcoef(domain, B=4)
+    beta_sample=simcoef(domain)
     mat[,j]=beta_sample$coef
   }
   return(list(coefs=mat,basis=beta_sample$basis, D=beta_sample$D))
 }
 
 
-verteces_display <- function(H, get_basis,add=F){
+verteces_display <- function(H, get_basis,add=F,ylim=NULL){
   k=dim(H)[1]
   library(FDboost)
   library(MASS)
@@ -85,12 +88,12 @@ verteces_display <- function(H, get_basis,add=F){
   #clr basis dim: 100 x k
   clrs=get_basis%*%H
   densities=clr2density(clrs,w=w)
-  matplot(domain,densities,type="l",main="densities",add=add)
+  matplot(domain,densities,type="l",main="densities",add=add,ylim=ylim)
 }
 
 
 #  Example
-#H_sample=H_simulator(m=4,k=13)
+#H_sample=H_simulator(m=4,k=23)
 #verteces_display(H_sample)
 
 
@@ -106,10 +109,10 @@ p_simulator<-function(m,n){
 library(clusterGeneration)
 library(compositions)
 
-mu_p=rnorm((m-1),sd=1)
-A <- matrix(rnorm((m-1)^2), (m-1), (m-1))
-Sigma_p= t(A) %*% A
-
+mu_p=rnorm((m-1),mean=1/m,sd=1)
+#A <- matrix(rnorm((m-1)^2), (m-1), (m-1))
+#Sigma_p= t(A) %*% A
+Sigma_p=diag(1,m-1,m-1)
 library(MASS)
 p_ilr=rmvnorm(n,mu_p,Sigma_p)
 p=matrix(0,m,n)
@@ -145,7 +148,7 @@ return(list(pF=pF, H=H_sample,p=psim))
 #######################################
 
 
-F_simulator<- function(m,k=13,n,sd){
+F_simulator<- function(m,k=23,n,sd){
   #A <- matrix(rnorm((k)^2,sd=sd), k, k)
   #Sigma_eps= t(A) %*% A
   Sigma_eps=diag(sd,k)
