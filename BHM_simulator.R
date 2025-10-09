@@ -7,7 +7,7 @@
 #######################################
 ######## Verteces simulator ###########
 #######################################
-
+#setwd("C:/Users/test/OneDrive - Politecnico di Milano/Desktop/BHMixtures/BHMixtures")
 source("clr2density.R")
 
 domain=seq(0,1,length.out=100)

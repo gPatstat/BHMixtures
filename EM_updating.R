@@ -22,18 +22,3 @@ EM_updating=function(f_coef,Sigma_eps0, H0, mu_p0, Sigma_p0,B=100,D){
   }
   return(list(mu_p=mu_p0,Sigma_p=Sigma_p0,H=H0,Sigma_eps=Sigma_eps0))
 }
-
-Sigma_eps0=Sigma_eps
-H0=H
-Sigma_p0=Sigma_p
-mu_p0=mu_p
-
-
-
-x11()
-par(mfrow=c(2,2))
-verteces_display(H, get_basis)
-verteces_display(H0, get_basis)
-
-x11()
-verteces_display(H0, get_basis)
