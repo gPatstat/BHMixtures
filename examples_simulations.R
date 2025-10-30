@@ -1,6 +1,6 @@
 library(FDboost)
 
-source("BHM_simultor.R")
+source("BHM_simulator.R")
 source("Sampling_p.R")
 source("clr2density.R")
 source("coef_function.R")
@@ -11,9 +11,9 @@ source("EM_updating.R")
 ############## examples #################
 
 m=3
-n=500
+n=150
 
-F_sample=F_simulator(m=m,n=n,sd=0.01)
+F_sample=F_simulator(m=m,n=n,sd=10^-4)
 
 Sigma_eps=F_sample$Sigma_eps
 Sigma_p=F_sample$pF$p$sigma
@@ -24,22 +24,16 @@ D=F_sample$pF$H$D
 
 get_basis=F_sample$pF$H$basis
 
-
 x11()
-par(mfrow=c(1,2))
-image(Sigma_eps)
-image(cov(t(F_sample$coef_noise)))
-
-
-x11()
-par(mfrow=c(1,2))
+par(mfrow=c(1,3))
 verteces_display(H%*%(F_sample$pF$p$p),get_basis)
 verteces_display(f_coef,get_basis)
+verteces_display(H,get_basis)
 
 
 ##################################################################
 
-
+id=10
 coefs=f_coef[,id]
 
 imps=importance_sampling_p(coefs,Sigma_eps, H, mu_p, Sigma_p,B=100)
@@ -124,22 +118,24 @@ H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_new,D=D,lambda=0)
 verteces_display(H_new, get_basis)
 
 #################################################################
-
-k=13
+m
+k=23
 pca=princomp(t(f_coef))
 #H0=(f_coef[,sample(1:150,3)])
 H0=pca$loadings[,1:m]
-sd0=pca$sdev[m+1]
+sd0=0.5
 
 x11()
 verteces_display(H0,get_basis)
 
-EM_sample=EM_updating(f_coef, diag(sd0,k,k), H0 , rep(0,m-1), diag(1,m-1,m-1), B=20,D=D,lambda=100)
+EM_sample=EM_updating(f_coef, diag(sd0,k,k), H0 , rep(0,m-1), diag(1,m-1,m-1), 
+                      B=20,D=D,lambdaS=10^-2, lambdaH=10^-2)
 
 x11()
 par(mfrow=c(1,2))
 verteces_display((H), get_basis)
 verteces_display(EM_sample$H, get_basis)
+
 
 
 sample_p=mvrnorm(150,EM_sample$mu_p,EM_sample$Sigma_p)
@@ -151,11 +147,10 @@ EM_H=EM_sample$H
 
 sample_from_EM=t(sample_p)%*%(t(EM_sample$H))
 
-
 x11()
 par(mfrow=c(1,2))
-verteces_display(F_sample$pF$pF,get_basis)
-verteces_display(t(sample_from_EM),get_basis)
+verteces_display(F_sample$pF$pF,get_basis,ylim=c(0,1.4))
+verteces_display(t(sample_from_EM),get_basis,ylim=c(0,1.4))
 mu_p
 EM_sample$mu_p
 
@@ -163,3 +158,4 @@ EM_sample$mu_p
 
 Sigma_p
 EM_sample$Sigma_p
+
