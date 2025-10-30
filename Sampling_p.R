@@ -12,14 +12,14 @@
 
 
 posterior_builder=function(f0,Sigma_eps, H, mu_p, Sigma_p){
+  library(compositions)
   options(digits = 22)  # aumenta cifre stampate
   inv_Sigma_eps=solve(Sigma_eps)
   inv_Sigma_p=solve(Sigma_p)
   f0=as.matrix(f0)
   func=function(x){
-    library(compositions)
     p_x=as.numeric(ilrInv(x))
-    val=-1/2*(t(x-mu_p)%*%inv_Sigma_p%*%(x-mu_p)+det(Sigma_p)+t(f0-H%*%p_x)%*%inv_Sigma_eps%*%(f0-H%*%p_x)+det(Sigma_eps))
+    val=-1/2*(t(x-mu_p)%*%inv_Sigma_p%*%(x-mu_p)+log(det(Sigma_p))+t(f0-H%*%p_x)%*%inv_Sigma_eps%*%(f0-H%*%p_x)+log(det(Sigma_eps)))
     return(-as.numeric(val))
   }
   return(func)
@@ -29,7 +29,7 @@ posterior_builder=function(f0,Sigma_eps, H, mu_p, Sigma_p){
 #install.packages("numDeriv")  # if not installed
 
 
-importance_sampling_p=function(f0,Sigma_eps, H, mu_p, Sigma_p,B=1000){
+importance_sampling_p=function(f0,Sigma_eps, H, mu_p, Sigma_p,B=100){
   library(scales)
   library(MASS)
   library(numDeriv)
@@ -47,11 +47,8 @@ importance_sampling_p=function(f0,Sigma_eps, H, mu_p, Sigma_p,B=1000){
   wgt=numeric(B)
   x=matrix(NA,B,length(mu_p))
   for(b in 1:B){
-    length(x[b,])
-    mu_opt
-    Mat
     x[b,]=mvrnorm(1,mu_opt,solve(Mat))
-    wgt[b]=-post_prob(x[b,])+1/2*t(x[b,]-mu_opt)%*%Mat%*%(x[b,]-mu_opt)+1/2*det(solve(Mat))
+    wgt[b]=-post_prob(x[b,])+1/2*t(x[b,]-mu_opt)%*%Mat%*%(x[b,]-mu_opt)-1/2*log(det(Mat))
   }
   wgt=exp(wgt)
   if(sum(wgt)>0){
@@ -61,9 +58,6 @@ return(list(proportions=x,wgt=wgt))
 }
 
 
-
-
-
-
-
+#prova=importance_sampling_p(f_coef_pca[,10], diag(sd0,k,k), H0 , rep(0,m-1), diag(1,m-1,m-1),B=100)
+#prova
 
