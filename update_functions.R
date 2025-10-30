@@ -6,7 +6,7 @@
 
 # f_coef here is the matrix of coefficients [n x k]
 
-update_H=function(f_coef,Sigma_eps, H_old, mu_p, Sigma_p,B=100, lambda=10^-4,D){
+update_H=function(f_coef,Sigma_eps, H_old, mu_p, Sigma_p,B=30, lambda=10^-4,D){
   n=dim(f_coef)[2]
   k=dim(f_coef)[1]
   m=length(mu_p)+1
@@ -43,7 +43,7 @@ update_H=function(f_coef,Sigma_eps, H_old, mu_p, Sigma_p,B=100, lambda=10^-4,D){
 
 
 
-update_mu_p=function(f_coef,Sigma_eps, H, mu_p_old, Sigma_p,B=100){
+update_mu_p=function(f_coef,Sigma_eps, H, mu_p_old, Sigma_p,B=30){
   n=dim(f_coef)[2]
   k=dim(f_coef)[1]
   m=length(mu_p)+1
@@ -62,7 +62,7 @@ update_mu_p=function(f_coef,Sigma_eps, H, mu_p_old, Sigma_p,B=100){
   return((mu0/sumW))
 }
 
-update_Sigma_p=function(f_coef,Sigma_eps, H, mu_p, Sigma_p_old,lambda=100,B=100){
+update_Sigma_p=function(f_coef,Sigma_eps, H, mu_p, Sigma_p_old,lambda=100,B=30){
   n=dim(f_coef)[2]
   k=dim(f_coef)[1]
   m=length(mu_p)+1
@@ -82,19 +82,30 @@ update_Sigma_p=function(f_coef,Sigma_eps, H, mu_p, Sigma_p_old,lambda=100,B=100)
   return((sigma0/sumW)+lambda*diag(1,m-1))
 }
 
-update_Sigma_eps=function(f_coef,Sigma_eps_old, H, mu_p, Sigma_p,B=100){
-  n=dim(f_coef)[2]
-  k=dim(f_coef)[1]
-  m=length(mu_p)+1
-  W=numeric(B)
-  sigma0=matrix(0,k,k)
+update_Sigma_eps=function(f_coef,Sigma_eps_old, H, mu_p, Sigma_p,B=30){
+  #Initialization
+  
+  n=dim(f_coef)[2] #n units
+  k=dim(f_coef)[1] #k coefs of clrs
+  m=length(mu_p)+1 #m vertices
+  W=numeric(B) #weights vector (of one single unit)
+  sigma0=matrix(0,k,k) 
   sumW=0
+  
   for(i in 1:n){
+    
+    #Select the i-th density (coeffs of clr)
     f0=f_coef[,i] # [k x 1]
+    
+    #Importance sampling of proportions.
     sample_prop=importance_sampling_p(f0,Sigma_eps_old, H, mu_p, Sigma_p,B=B)
-    W=sample_prop$wgt        # [B x 1]
+    W=sample_prop$wgt        # [B x 1] weights
+    X=sample_prop$proportions  # [B x m] ilr of proportions sampled
+    
     sumW=sumW+sum(W)
-    X=sample_prop$proportions  # [B x m]
+    
+    # Monte Carlo estimation of Sigma_eps
+    
     for(b in 1:B){
       p_x=as.numeric(ilrInv(X[b,]))
       sigma0=sigma0+(f0-H%*%p_x)%*%t(f0-H%*%p_x)*W[b] # colum vec %*% row vec
