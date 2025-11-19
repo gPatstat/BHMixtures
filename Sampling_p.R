@@ -54,10 +54,9 @@ importance_sampling_p=function(f0,Sigma_eps, H, mu_p, Sigma_p,B=100){
   if(sum(wgt)>0){
     wgt=wgt/sum(wgt)
   }
-return(list(proportions=x,wgt=wgt))
+  return(list(proportions=x,wgt=wgt))
 }
 
 
 #prova=importance_sampling_p(f_coef_pca[,10], diag(sd0,k,k), H0 , rep(0,m-1), diag(1,m-1,m-1),B=100)
 #prova
-

@@ -29,9 +29,7 @@ source("EM_updating.R")
 
 set.seed(03072)
 m=2
-n=150
-
-
+n=200
 
 F_sample=F_simulator(m=m,n=n,sd_perc=0.01)
 
@@ -45,6 +43,7 @@ D0=F_sample$pF$H$D0
 
 get_basis=F_sample$pF$H$basis
 
+
 x11()
 par(mfrow=c(1,3))
 verteces_display(H%*%(F_sample$pF$p$p),get_basis, main="Density mixtures")
@@ -54,9 +53,11 @@ verteces_display(H,get_basis, main="Vertices")
 
 ##################################################################
 
-#id=10
+id=10
 coefs=f_coef[,id]
 
+
+posterior_builder(coefs,Sigma_eps, H, mu_p, Sigma_p)
 imps=importance_sampling_p(coefs,Sigma_eps, H, mu_p, Sigma_p,B=100)
 
 wgt_scaled <- imps$wgt 
@@ -121,41 +122,30 @@ fig <- fig %>% layout(
 fig
 
 
-###############################################################################
-
-H_old=(f_coef[,sample(1:(dim(f_coef)[1]),3)])
-H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_old,D=D,lambda=100)
-H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_new,D=D,lambda=100)
-
-get_basis=F_sample$pF$H$basis
-
-x11()
-par(mfrow=c(4,2))
-verteces_display(H, get_basis)
-verteces_display(H_old, get_basis)
-verteces_display(H_new, get_basis)
-
-H_new=update_H(f_coef,Sigma_eps,mu_p,Sigma_p,H_old=H_new,D=D,lambda=0)
-verteces_display(H_new, get_basis)
-
 #################################################################
 
 ## Non centred PCA! ##
 # If you have scarsity in data to build the densities, use sparse-principal component
+
+x11()
+par(mfrow=c(1,2))
+image(D0)
+image(D)
+
 
 D=F_sample$pF$H$D
 D0=F_sample$pF$H$D0
 
 m
 k=23
-sd0=10^-6
+
 
 Cmat <- cov(t(f_coef))
-A <- D0 + D * 1e4  # try smaller penalty
-M <- D0 %*% Cmat %*% D0
+A <- D0 + D *0  # try smaller penalty
+M <- D0%*%Cmat%*%D0
 
 # Solve generalized eigenproblem (A^-1 M)
-Mat_fpca <- eigen(solve(A, M), symmetric = TRUE)
+Mat_fpca <- eigen(M%*%solve(A), symmetric = TRUE)
 
 #D0[i,j]=integral(elem[i]*elem[j])
 loadings=Mat_fpca$vectors
@@ -164,7 +154,7 @@ pca_basis=get_basis%*%loadings
 
 
 x11()
-matplot(1:100,pca_basis,type="l")
+matplot(1:100,pca_basis[,1:m],type="l")
 
 for(j in 1:k){
   norm_const=sqrt(sum(pca_basis[,j]^2)*w)
@@ -183,8 +173,6 @@ matplot(1:100,pca_basis,type="l")
 
 #y=a*1*x/a=x
 
-
-
 D_pca=t(loadings)%*%D%*%(loadings)
 D0_pca=t(loadings)%*%D0%*%(loadings)
 
@@ -196,16 +184,20 @@ verteces_display(f_coef_pca,pca_basis)
 
 H0=diag(k)[,1:m]
 
-sd0=0.01
-EM_sample=EM_updating(f_coef_pca, diag(sd0,k,k), H0 , rep(0,m-1), diag(1,m-1,m-1), 
-                      B=20,D=D_pca,lambdaS=1,lambdaH=0)
+x11()
+verteces_display(H0,pca_basis)
+
+sd0=0.1
+EM_sample=EM_updating(f_coef=f_coef_pca, Sigma_eps0=diag(sd0,k,k), H0=H0,
+                      mu_p0=rep(0,m-1), Sigma_p0=diag(1,m-1,m-1), 
+                      B=20,D=D,lambdaS=0,lambdaH=0,gb=get_basis,pb=pca_basis)
 
 
 
 x11()
 par(mfrow=c(1,2))
-verteces_display((H), get_basis,ylim=c(0,3))
-verteces_display(EM_sample$H, pca_basis,ylim=c(0,3))
+verteces_display((H), get_basis,ylim=c(0,4.5))
+verteces_display(EM_sample$H, pca_basis,ylim=c(0,4.5))
 
 
 

@@ -6,7 +6,7 @@
 
 # f_coef here is the matrix of coefficients [n x k]
 
-update_H=function(f_coef,Sigma_eps, H_old, mu_p, Sigma_p,B=30, lambda=10^-4,D){
+update_H=function(f_coef,Sigma_eps, H_old, mu_p, Sigma_p,B=100, lambda=10^-4,D){
   n=dim(f_coef)[2]
   k=dim(f_coef)[1]
   m=length(mu_p)+1
@@ -32,8 +32,6 @@ update_H=function(f_coef,Sigma_eps, H_old, mu_p, Sigma_p,B=30, lambda=10^-4,D){
     }
   }
   vec_C=matrix(C,k*m,1,byrow=F)
-
-  den=t(A_r)%x%diag(k)-diag(m)%x%A_l
   den=+diag(m)%x%A_l+t(A_r)%x%diag(k)
   vec_solution=solve(den)%*%vec_C
   solution=matrix(vec_solution,k,m,byrow=F)
@@ -43,7 +41,7 @@ update_H=function(f_coef,Sigma_eps, H_old, mu_p, Sigma_p,B=30, lambda=10^-4,D){
 
 
 
-update_mu_p=function(f_coef,Sigma_eps, H, mu_p_old, Sigma_p,B=30){
+update_mu_p=function(f_coef,Sigma_eps, H, mu_p_old, Sigma_p,B=100){
   n=dim(f_coef)[2]
   k=dim(f_coef)[1]
   m=length(mu_p)+1
@@ -62,7 +60,7 @@ update_mu_p=function(f_coef,Sigma_eps, H, mu_p_old, Sigma_p,B=30){
   return((mu0/sumW))
 }
 
-update_Sigma_p=function(f_coef,Sigma_eps, H, mu_p, Sigma_p_old,lambda=100,B=30){
+update_Sigma_p=function(f_coef,Sigma_eps, H, mu_p, Sigma_p_old,lambda=100,B=100){
   n=dim(f_coef)[2]
   k=dim(f_coef)[1]
   m=length(mu_p)+1
@@ -82,7 +80,7 @@ update_Sigma_p=function(f_coef,Sigma_eps, H, mu_p, Sigma_p_old,lambda=100,B=30){
   return((sigma0/sumW)+lambda*diag(1,m-1))
 }
 
-update_Sigma_eps=function(f_coef,Sigma_eps_old, H, mu_p, Sigma_p,B=30){
+update_Sigma_eps=function(f_coef,Sigma_eps_old, H, mu_p, Sigma_p,B=100){
   #Initialization
   
   n=dim(f_coef)[2] #n units
@@ -113,6 +111,11 @@ update_Sigma_eps=function(f_coef,Sigma_eps_old, H, mu_p, Sigma_p,B=30){
   }
   return(sigma0/sumW)
 }
+
+
+
+
+
 
 
 

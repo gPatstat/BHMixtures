@@ -1,8 +1,5 @@
-
-
-
 EM_updating = function(f_coef, Sigma_eps0, H0, mu_p0, Sigma_p0, 
-                       B = 100, D, lambdaS = 10, lambdaH = 10) {
+                       B = 100, D, lambdaS = 10, lambdaH = 10,gb,pb) {
   for (b in 1:B) {
     t1=Sys.time()
     # Save previous values
@@ -10,13 +7,13 @@ EM_updating = function(f_coef, Sigma_eps0, H0, mu_p0, Sigma_p0,
     Sigma_p_prev <- Sigma_p0
     
     # Update parameters
-
+    
     Sigma_eps0 <- update_Sigma_eps(f_coef = f_coef, Sigma_eps0, H0, mu_p0, Sigma_p0)
-
+    
     H0 <- update_H(f_coef = f_coef, Sigma_eps0, H0, mu_p0, Sigma_p0, D = D, lambda = lambdaH)
-
+    
     mu_p0 <- update_mu_p(f_coef = f_coef, Sigma_eps0, H0, mu_p0, Sigma_p0)
-
+    
     Sigma_p0 <- update_Sigma_p(f_coef = f_coef, Sigma_eps0, H0, mu_p0, Sigma_p0, lambda = lambdaS)
     
     # Compute relative changes
@@ -42,27 +39,11 @@ EM_updating = function(f_coef, Sigma_eps0, H0, mu_p0, Sigma_p0,
       image(Sigma_p0)
       image(as.matrix(mu_p))
       image(as.matrix(mu_p0))
-      verteces_display(H, get_basis)
-      verteces_display(H0, pca_basis)
+      verteces_display(H, gb)
+      verteces_display(H0, pb)
     }
     print(Sys.time()-t1)
   }
   
   return(list(mu_p = mu_p0, Sigma_p = Sigma_p0, H = H0, Sigma_eps = Sigma_eps0))
 }
-<<<<<<< HEAD
-=======
-
-Sigma_eps0=Sigma_eps
-H0=H
-Sigma_p0=Sigma_p
-mu_p0=mu_p
-
-x11()
-par(mfrow=c(2,2))
-verteces_display(H, get_basis)
-verteces_display(H0, get_basis)
-
-x11()
-verteces_display(H0, get_basis)
->>>>>>> ae647ff303139513bd74f893d9eb2063b807019f
