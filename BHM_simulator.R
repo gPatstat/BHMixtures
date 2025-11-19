@@ -2,6 +2,8 @@
 ######## BHMixtures simulator #########
 #######################################
 
+
+
 #######################################
 ######## Verteces simulator ###########
 #######################################
@@ -12,65 +14,59 @@ domain=seq(0,1,length.out=100)
 w=diff(domain[1:2])
 
 simcoef=function(a,b,domain,B=100){
+  set.seed(0307)
   library(FDboost)
   #multin=rmultinom(10^5,B,1/B)
-  #beta=rbeta(n=B,a,b)
-  #histbeta=hist(beta,breaks=seq(0,1,0.1),plot=F)
-  #wbin=1/length(histbeta$counts)
-  #counts=histbeta$counts
-
-  #sum0=sum(counts==0)
-  #counts=ifelse(counts==0,1,counts)
-  #tot_counts=B+sum0
-  #ddens=counts/(tot_counts*wbin)
+  beta=rbeta(n=B,a,b)
+  histbeta=hist(beta,breaks=seq(0,1,0.01),plot=F)
+  wbin=1/length(histbeta$counts)
+  counts=histbeta$counts
   
-  ddens=dbeta(seq(0,1,0.01),a,b)
-  x=matrix(clr(ddens,0.01,inverse=F),1,length(seq(0,1,0.01)))
-  t=seq(0,1,0.01)
-  basis=bbsc(t,df=4,knots=20,boundary.knots=c(0,1),degree=3)
-  get_basis=extract(basis,"design",derivative=0,asmatrix=T) # 10 breaks x 11 elements of basis
+  sum0=sum(counts==0)
+  counts=ifelse(counts==0,0.01,counts)
+  tot_counts=B+sum0*0.01
+  ddens=counts/(tot_counts*wbin)
+  dclrs=list(x=matrix(clr(ddens,w=wbin,inverse=F),1,length(histbeta$mids)),t=histbeta$mids)
 
-
-  # loss=t(x-coefs%*%get_basis(t))%*%J%*%(x-coefs%*%get_basis(t))+lambda*t(coefs)%*%J%*%coefs
-  
-  dclrs=list(x=x,t=t)
-  
   cclrs=FDboost(x~1, 
                 #use bbsc() in time formula to ensure integrate-to-zero constraint 
                 timeformula= ~bbsc(t,df=4, 
                                    knots=20,
                                    boundary.knots=c(0,1),
                                    degree=3,
-                                   lambda=10^1),
+                                   lambda=10^3),
                 data=dclrs,offset=0, 
                 control=boost_control(mstop=100))
+  t=histbeta$mids
+  basis=bbsc(t,df=4,knots=20,boundary.knots=c(0,1),degree=3)
+  get_basis=extract(basis,"design",asmatrix=T) # 10 breaks x 11 elements of basis
   coefs=as.numeric(cclrs$coef(which=1)[[1]])
   new_basis <- bbsc(domain, df = 4, knots = 20, boundary.knots = c(0, 1), degree = 3,lambda=10^5)
   # Extract design matrix from the new basis
   get_basis_new <- extract(new_basis, "design", asmatrix = TRUE)
-  basis_dd <- extract(new_basis, "penalty", asmatrix = TRUE)  # (200 x nbasis) matrix
+  basis_dd <- extract(new_basis, "design", derivative = 2, asmatrix = TRUE)  # (200 x nbasis) matrix
+  
+  D0=t(get_basis_new)%*%get_basis_new*w
+  D <- t(basis_dd) %*% basis_dd * w  # approximate integral
   
   
-  D0 <- t(get_basis_new)%*%get_basis_new*w
-  D <- t(basis_dd) %*% basis_dd *w  # approximate integral
-
+  ### Random amplification
+  ampl=1
+  coefs=ampl*coefs
   return(list(coefs=coefs,basis=get_basis_new, D=D,D0=D0))
 }
-
 
 H_simulator <- function(m,k=23){
   library(FDboost)
   library(mvtnorm)
-  grid=expand.grid(seq(2,8,length.out=m),seq(2,8,length.out=m))
   mat <- matrix(0, k, m)
   for (j in 1:m) {
-    a=grid[m*j,1]
-    b=grid[m*j,2]
+    a=j+1
+    b=m-j+2
     beta_sample=simcoef(a,b,domain)
-    ampl=j
-    mat[,j]=ampl*beta_sample$coef
+    mat[,j]=beta_sample$coef
+    print(c(a,b))
   }
-  
   return(list(coefs=mat,basis=beta_sample$basis, D=beta_sample$D,D0=beta_sample$D0))
 }
 
@@ -84,7 +80,7 @@ verteces_display <- function(H, get_basis,add=F,ylim=NULL,main="Densities"){
   #clr basis dim: 100 x k
   clrs=get_basis%*%H
   densities=clr2density(clrs,w=w)
-  matplot(domain,densities,type="l",main=main,add=add,ylim=ylim)
+  matplot(domain,densities,type="l",main=main,add=add,ylim=ylim,lty=1,lwd=2)
 }
 
 
@@ -101,9 +97,10 @@ verteces_display <- function(H, get_basis,add=F,ylim=NULL,main="Densities"){
 #mu_p
 #Sigma_p
 
-p_simulator<-function(m,n,var=4,mu_p){
+p_simulator<-function(m,n,mu_p,var=4){
   library(clusterGeneration)
   library(compositions)
+
   #A <- matrix(rnorm((m-1)^2), (m-1), (m-1))
   #Sigma_p= t(A) %*% A
   Sigma_p=diag(var,m-1,m-1)
@@ -128,7 +125,7 @@ p_simulator<-function(m,n,var=4,mu_p){
 
 pF_simulator<- function(m,n,mu_p){
   H_sample=H_simulator(m) #k x m
-  psim=p_simulator(m,n,mu_p=mu_p)
+  psim=p_simulator(m,n,mu_p)
   pp=psim$p # m x n
   
   pF=as.matrix(H_sample$coefs%*%as.matrix(pp)) # k x n
@@ -143,14 +140,21 @@ pF_simulator<- function(m,n,mu_p){
 
 
 F_simulator<- function(m,k=23,n,sd_perc,mu_p=rep(0,m-1)){
-  pF_sim=pF_simulator(m=m,n=n,mu_p=mu_p)
+  #A <- matrix(rnorm((k)^2,sd=sd), k, k)
+  #Sigma_eps= t(A) %*% A
+  pF_sim=pF_simulator(m=m,n=n,mu_p)
   pF=pF_sim$pF
   get_basis=pF_sim$H$basis
+  
   sd=sd_perc*sd(pF)
   Sigma_eps=diag(sd^2,k)
   coef_noise=t(rmvnorm(n,rep(0,k),Sigma_eps))
+  
   nF=pF+coef_noise
   
   return(list(pF=pF_sim,nF=nF,Sigma_eps=Sigma_eps,coef_noise=coef_noise,basis=pF_sim$H$basis,D=pF_sim$H$D,D0=pF_sim$H$D0))
 }
+
+
+F_sample=F_simulator(m=4,n=100,sd_perc=0.02)
 
