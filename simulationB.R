@@ -1,6 +1,6 @@
 library(FDboost)
 
-setwd("C:/Users/giuli/Desktop/File locali/BHMixtures/BHMixtures")
+setwd("C:/Users/test/OneDrive - Politecnico di Milano/Desktop/BHMixtures/BHMixtures")
 source("BHM_simulator.R")
 source("Sampling_p.R")
 source("clr2density.R")
@@ -19,7 +19,7 @@ source("EM_updating.R")
 library(compositions)
 
 nsim=1
-sd_perc=c(0.01,0.02,0.05,0.1)
+sd_perc=c(0.01,0.1,0.2,0.5)
 sd0=0.1
 seed=03072
 m=3
@@ -27,7 +27,7 @@ n=150
 k=23
 
 set.seed(seed)
-for(par_id in 1:5){
+for(par_id in 2:4){
   
 param_b=sd_perc[par_id]
 
@@ -76,15 +76,17 @@ for(sim_id in 1:nsim){
     D0_pca=t(loadings)%*%D0%*%(loadings)
     
     H0=diag(k)[,1:m]
+    
+    lamH=Mat_fpca$values[1]
 
     EM_sample=EM_updating(f_coef_pca, diag(sd0,k,k), H0 , rep(0,m-1), diag(1,m-1,m-1), 
-                          B=20,D=D_pca,lambdaS=1,lambdaH=0)
+                          B=20,D=D_pca,lambdaS=1,lambdaH=10^-2,gb=get_basis,pb=pca_basis)
     
     save(EM_sample,pca_basis,F_sample,get_basis, file = paste("simB_sim",sim_id,"par",param_b,"seed",seed,".rdata"))
  }
 }
 
-sd_perc=c(0.01,0.02,0.05,0.1)
+sd_perc=c(0.01,0.1,0.2,0.5)
 
 seed=03072
 set.seed(seed)

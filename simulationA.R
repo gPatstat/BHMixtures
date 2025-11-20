@@ -76,7 +76,7 @@ for(par_id in 1:4){
     H0=diag(k)[,1:m]
     
     EM_sample=EM_updating(f_coef_pca, diag(sd0,k,k), H0 , rep(0,m-1), diag(1,m-1,m-1), 
-                          B=20,D=D_pca,lambdaS=1,lambdaH=0)
+                          B=40,D=D_pca,lambdaS=1,lambdaH=0,gb=get_basis,pb=pca_basis)
     
     save(EM_sample,pca_basis,F_sample,get_basis, file = paste("simA_sim",sim_id,"par",param_a,"seed",seed,".rdata"))
   }
@@ -88,7 +88,7 @@ seed=03072
 set.seed(seed)
 
 x11()
-par(mfcol=c(2,4))
+par(mfrow=c(4,2))
 for(par_id in 1:4){
   m=m_params[par_id]
   param_a=m_params[par_id]

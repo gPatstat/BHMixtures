@@ -1,5 +1,8 @@
+
+
 library(FDboost)
 
+setwd("C:/Users/test/OneDrive - Politecnico di Milano/Desktop/BHMixtures/BHMixtures")
 source("BHM_simulator.R")
 source("Sampling_p.R")
 source("clr2density.R")
@@ -27,8 +30,9 @@ source("EM_updating.R")
 # One sim. is around 30 min 
 # 100*15*30= 1500 min = 750 ore
 
+
 set.seed(03072)
-m=2
+m=3
 n=200
 
 F_sample=F_simulator(m=m,n=n,sd_perc=0.01)
