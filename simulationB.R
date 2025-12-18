@@ -7,7 +7,7 @@ source("clr2density.R")
 source("coef_function.R")
 source("update_functions.R")
 source("EM_updating.R")
-
+source("second_derivative_fd.R")
 
 ############## examples #################
 #set.seed(03071)
@@ -18,7 +18,7 @@ source("EM_updating.R")
 
 library(compositions)
 
-nsim=1
+nsim=100
 sd_perc=c(0.01,0.1,0.2,0.5)
 sd0=0.1
 seed=03072
@@ -27,7 +27,7 @@ n=150
 k=23
 
 set.seed(seed)
-for(par_id in 2:4){
+for(par_id in 1:4){
   
 param_b=sd_perc[par_id]
 
@@ -80,10 +80,11 @@ for(sim_id in 1:nsim){
     lamH=Mat_fpca$values[1]
 
     EM_sample=EM_updating(f_coef_pca, diag(sd0,k,k), H0 , rep(0,m-1), diag(1,m-1,m-1), 
-                          B=20,D=D_pca,lambdaS=1,lambdaH=10^-2,gb=get_basis,pb=pca_basis)
+                          B=50,D=D_pca,lambdaS=1,lambdaH=10^-2,gb=get_basis,pb=pca_basis)
     
     save(EM_sample,pca_basis,F_sample,get_basis, file = paste("simB_sim",sim_id,"par",param_b,"seed",seed,".rdata"))
- }
+    print(sim_id)
+    }
 }
 
 sd_perc=c(0.01,0.1,0.2,0.5)
@@ -91,6 +92,7 @@ sd_perc=c(0.01,0.1,0.2,0.5)
 seed=03072
 set.seed(seed)
 
+sim_id=100
 x11()
 par(mfrow=c(4,2))
 for(par_id in 1:4){
@@ -98,6 +100,9 @@ for(par_id in 1:4){
   load(paste("simB_sim",sim_id,"par",param_b,"seed",seed,".rdata"))
   verteces_display(F_sample$pF$H$coefs, get_basis, main=paste("True vertices with par_B=",sd_perc[par_id]),ylim=c(0,4))
   verteces_display(EM_sample$H,pca_basis, main=paste("Estimated vertices with par_B=",sd_perc[par_id]),ylim=c(0,4))
+  print(min_perm_H1(pca_basis%*%EM_sample$H,get_basis%*%F_sample$pF$H$coefs))
+  #H2=F_sample$pF$H$coefs%*%pca_basis%*%F_sample$pF$H$coefs
+  #print(c(error_vertex(EM_sample$H,H2)/(nsim*4),param_b))
   #mu_true=as.matrix(t(F_sample$pF$p$mu))
   #mu_p=as.matrix(t(EM_sample$mu_p))
   #image(as.matrix(ilrInv(mu_true)))

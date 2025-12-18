@@ -2,10 +2,9 @@
 # Simulation A
 # m=2,3,5,8,13,21 - Fibonacci's series.
 
-nsim=1
-dev_params=c(0,1/5,1/3,1/2,1,2,3)
+nsim=100
+dev_params=c(1/2,1,2,3)
 sd0=0.1
-seed=03072
 m=3
 n=150
 k=23
@@ -13,7 +12,7 @@ k=23
 seed=03072
 set.seed(seed)
 
-for(par_id in 1:7){
+for(par_id in 1:4){
   for(sim_id in 1:nsim){
     
     param_c=dev_params[par_id]
@@ -67,7 +66,8 @@ for(par_id in 1:7){
     
     
     save(EM_sample,pca_basis,F_sample,get_basis, file = paste("simC_sim",sim_id,"par",param_c,"seed",seed,".rdata"))
-  }
+    print(sim_id)
+    }
 }
 
 
@@ -105,7 +105,7 @@ for(par_id in 5:7){
 
 x11()
 par(mfrow=c(4,2))
-for(par_id in c(4,5,6,7)){
+for(par_id in 1:4){
   param_c=dev_params[par_id]
   load(paste("simC_sim",sim_id,"par",param_c,"seed",seed,".rdata"))
   verteces_display(F_sample$pF$H$coefs, get_basis, ylim=c(0,4), main=paste("True vertices with par_C=",param_c))

@@ -14,7 +14,6 @@ domain=seq(0,1,length.out=100)
 w=diff(domain[1:2])
 
 simcoef=function(a,b,domain,B=100){
-  set.seed(0307)
   library(FDboost)
   #multin=rmultinom(10^5,B,1/B)
   beta=rbeta(n=B,a,b)
@@ -44,9 +43,10 @@ simcoef=function(a,b,domain,B=100){
   new_basis <- bbsc(domain, df = 4, knots = 20, boundary.knots = c(0, 1), degree = 3,lambda=10^5)
   # Extract design matrix from the new basis
   get_basis_new <- extract(new_basis, "design", asmatrix = TRUE)
-  basis_dd <- extract(new_basis, "design", derivative = 2, asmatrix = TRUE)  # (200 x nbasis) matrix
-  
   D0=t(get_basis_new)%*%get_basis_new*w
+  
+  
+  basis_dd=na.omit(apply(get_basis_new,2,second_derivative_fd))
   D <- t(basis_dd) %*% basis_dd * w  # approximate integral
   
   
@@ -65,7 +65,6 @@ H_simulator <- function(m,k=23){
     b=m-j+2
     beta_sample=simcoef(a,b,domain)
     mat[,j]=beta_sample$coef
-    print(c(a,b))
   }
   return(list(coefs=mat,basis=beta_sample$basis, D=beta_sample$D,D0=beta_sample$D0))
 }
@@ -98,7 +97,6 @@ verteces_display <- function(H, get_basis,add=F,ylim=NULL,main="Densities"){
 #Sigma_p
 
 p_simulator<-function(m,n,mu_p,var=4){
-  library(clusterGeneration)
   library(compositions)
 
   #A <- matrix(rnorm((m-1)^2), (m-1), (m-1))
@@ -156,5 +154,5 @@ F_simulator<- function(m,k=23,n,sd_perc,mu_p=rep(0,m-1)){
 }
 
 
-F_sample=F_simulator(m=4,n=100,sd_perc=0.02)
+#F_sample=F_simulator(m=4,n=100,sd_perc=0.02)
 

@@ -15,16 +15,16 @@ source("EM_updating.R")
 # Simulation A
 # m=2,3,5,8,13,21 - Fibonacci's series.
 
-nsim=1
+nsim=100
 m_params=c(2,3,5,8)
 sd0=0.1
 seed=03072
-n=150
+n=300
 k=23
 
 seed=03072
 set.seed(seed)
-for(par_id in 1:4){
+for(par_id in 4){
   for(sim_id in 1:nsim){
     m=m_params[par_id]
     param_a=m_params[par_id]
@@ -75,8 +75,9 @@ for(par_id in 1:4){
     
     H0=diag(k)[,1:m]
     
+    lamH=Mat_fpca$values[2]
     EM_sample=EM_updating(f_coef_pca, diag(sd0,k,k), H0 , rep(0,m-1), diag(1,m-1,m-1), 
-                          B=40,D=D_pca,lambdaS=1,lambdaH=0,gb=get_basis,pb=pca_basis)
+                          B=100,D=D_pca,lambdaS=1,lambdaH=0.1,gb=get_basis,pb=pca_basis)
     
     save(EM_sample,pca_basis,F_sample,get_basis, file = paste("simA_sim",sim_id,"par",param_a,"seed",seed,".rdata"))
   }
@@ -101,3 +102,15 @@ for(par_id in 1:4){
   #image(as.matrix(ilrInv(mu_p)))
 }
 
+
+
+x11()
+par_id=4
+par(mfrow=c(1,2))
+m=m_params[par_id]
+param_a=m_params[par_id]
+load(paste("simA_sim",sim_id,"par",param_a,"seed",seed,".rdata"))
+verteces_display(F_sample$pF$H$coefs, get_basis, ylim=c(0,6), main="True vertices")
+verteces_display(EM_sample$H,pca_basis, ylim=c(0,6), main="Estimated vertices")
+mu_true=as.matrix(t(F_sample$pF$p$mu))
+mu_p=as.matrix(t(EM_sample$mu_p))
