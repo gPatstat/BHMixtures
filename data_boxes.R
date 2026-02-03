@@ -1,19 +1,20 @@
 
 
-
+setwd("C:/Users/test/OneDrive - Politecnico di Milano/Desktop/BHMixtures/BHMixtures")
 data_boxA=numeric()
-
+nsim=100
 seed=03072
-for(par_id in 1:4){
+for(par_id in 1:3){
   m=m_params[par_id]
   param_a=m_params[par_id]
   for(sim_id in 1:nsim){
     tryCatch({
     load(paste("simA_sim",sim_id,"par",param_a,"seed",seed,".rdata"))
-      if(!is.complex(pca_basis)){
+    if(!is.complex(pca_basis)){
         mat1=pca_basis%*%EM_sample$H
         mat2=get_basis%*%F_sample$pF$H$coefs
-    data_boxA=rbind(data_boxA,c(error_vertex(mat1,mat2),param_a))}
+    data_boxA=rbind(data_boxA,c(error_vertex(mat1,mat2),param_a))
+    }
     },
     error=function(e){
       msg <- paste("ERROR in sim", sim_id, ":", conditionMessage(e), "at", Sys.time(), "\n")
@@ -46,8 +47,6 @@ for(par_id in 1:4){
 }
 
 data_boxC=numeric()
-
-
 seed=03072
 for(par_id in 1:4){
   param_c=dev_params[par_id]

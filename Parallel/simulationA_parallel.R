@@ -30,7 +30,7 @@ simul_func=function(sim_id){
     log_message <- paste("Start iteration", sim_id, "at", Sys.time(), "\n")
     write(log_message, file = "log.txt", append = TRUE)
     
-    F_sample=F_simulator(m=m,n=n,sd_perc=param_b)
+    F_sample=F_simulator(m=param_a,n=n,sd_perc=0.01)
     Sigma_eps=F_sample$Sigma_eps
     Sigma_p=F_sample$pF$p$sigma
     mu_p=F_sample$pF$p$mu
@@ -42,7 +42,7 @@ simul_func=function(sim_id){
     
     ## Non centred PCA ##
     Cmat <- cov(t(f_coef))
-    A <- D0 + D*1
+    A <- D0 + D*0
     M <- D0 %*% Cmat %*% D0
     
     L <- chol(A)
@@ -65,17 +65,16 @@ simul_func=function(sim_id){
     D0_pca=t(loadings)%*%D0%*%(loadings)
     
     H0=diag(k)[,1:m]
-    lamH=Mat_fpca$values[1]
+    #lamH=Mat_fpca$values[1]
     
     EM_sample=EM_updating(
       f_coef_pca, diag(sd0,k,k), H0, rep(0,m-1),
       diag(1,m-1,m-1),
-      B=50, D=D_pca, lambdaS=1, lambdaH=10^-2,
+      B=100, D=D_pca, lambdaS=1, lambdaH=10^-2,
       gb=get_basis, pb=pca_basis
     )
     
-    save(EM_sample,pca_basis,F_sample,get_basis,
-         file = paste("simB_sim",sim_id,"par",param_b,"seed",seed,".rdata"))
+    save(EM_sample,pca_basis,F_sample,get_basis,loadings,file = paste("simA_sim",sim_id,"par",param_a,"seed",seed,".rdata"))
     
   },
   error=function(e){
@@ -88,19 +87,21 @@ simul_func=function(sim_id){
 
 
 nsim=100
-sd_perc=c(0.01,0.1,0.2,0.5)
+m_params=c(2,3,5,
+           8)
 sd0=0.1
 seed=03072
-m=3
-n=150
+n=300
 k=23
 
 numcores=6
 
-for(par_id in 1:4){
+for(par_id in 4){
   cl=makeCluster(numcores)
-  param_b<<-sd_perc[par_id]
-  #clusterExport(cl,varlist=c("param_b","nsim","m","k","n","sd0"))
+  
+  m<<-m_params[par_id]
+  param_a<<-m_params[par_id]
+  
   ls_env=ls()
   clusterExport(cl,varlist=ls_env)
   clusterEvalQ(cl, ({
@@ -121,18 +122,3 @@ for(par_id in 1:4){
   
   stopCluster(cl)
 }
-
-sd_perc=c(0.01,0.1,0.2,0.5)
-
-seed=03072
-set.seed(seed)
-
-x11()
-par(mfrow=c(4,2))
-for(id in 1:8){
-  #param_b=sd_perc[par_id]
-  load(paste("simB_sim",id,"par",0.5,"seed",seed,".rdata"))
-  verteces_display(F_sample$nF, get_basis, main=paste("True vertices with par_B=",sd_perc[par_id]),ylim=c(0,4))
-  #verteces_display(EM_sample$H,pca_basis, main=paste("Estimated vertices with par_B=",sd_perc[par_id]),ylim=c(0,4))
-}
-

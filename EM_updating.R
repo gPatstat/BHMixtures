@@ -1,51 +1,52 @@
 EM_updating = function(f_coef, Sigma_eps0, H0, mu_p0, Sigma_p0, 
-                       B = 100, D, lambdaS = 10, lambdaH = 10,gb,pb) {
+                       B = 100, D, lambdaS = 10, lambdaH = 10,gb,pb,det_rate=1) {
+  ret=NULL
+  V=ilrBase(D=(dim(H0)[2]))
   for (b in 1:B) {
-    #t1=Sys.time()
+    t1=Sys.time()
     # Save previous values
-    mu_p_prev <- mu_p0
-    Sigma_p_prev <- Sigma_p0
+    #mu_p_prev <- mu_p0
+    #Sigma_p_prev <- Sigma_p0
+    
+    H_prev=H0
+    n_sub=ceiling(dim(f_coef)[2]*det_rate)
     
     # Update parameters
+    f_coef_sub=f_coef[,sample(1:(dim(f_coef)[2]),n_sub)]
+    Sigma_eps0 <- update_Sigma_eps(f_coef = f_coef_sub, Sigma_eps0, H0, mu_p0, Sigma_p0,V=V)
+    print(paste("Sigma_eps done at iteration ",b))
     
-    Sigma_eps0 <- update_Sigma_eps(f_coef = f_coef, Sigma_eps0, H0, mu_p0, Sigma_p0)
+    f_coef_sub=f_coef[,sample(1:(dim(f_coef)[2]),n_sub)]
+    H0 <- update_H(f_coef = f_coef_sub, Sigma_eps0, H0, mu_p0, Sigma_p0, D = D, lambda = lambdaH,V=V)
+    print(paste("H done at iteration ",b))
     
+    f_coef_sub=f_coef[,sample(1:(dim(f_coef)[2]),n_sub)]
+    mu_p0 <- update_mu_p(f_coef = f_coef_sub, Sigma_eps0, H0, mu_p0, Sigma_p0,V=V)
+    print(paste("mu_p done at iteration ",b))
     
-    
-    H0 <- update_H(f_coef = f_coef, Sigma_eps0, H0, mu_p0, Sigma_p0, D = D, lambda = lambdaH)
-    
-    mu_p0 <- update_mu_p(f_coef = f_coef, Sigma_eps0, H0, mu_p0, Sigma_p0)
-    
-    Sigma_p0 <- update_Sigma_p(f_coef = f_coef, Sigma_eps0, H0, mu_p0, Sigma_p0, lambda = lambdaS)
+    f_coef_sub=f_coef[,sample(1:(dim(f_coef)[2]),n_sub)]
+    Sigma_p0 <- update_Sigma_p(f_coef = f_coef_sub, Sigma_eps0, H0, mu_p0, Sigma_p0, lambda = lambdaS,V=V)
+    print(paste("Sigma_p done at iteration ",b))
     
     # Compute relative changes
-    mu_change <- sqrt(sum((mu_p0-mu_p_prev)^2)) / sqrt(sum((mu_p_prev + 1e-8)^2))
-    Sigma_change <- norm(as.matrix(Sigma_p0-Sigma_p_prev), type = "F") / (norm(as.matrix(Sigma_p_prev), type = "F") + 1e-8)
+    #mu_change <- sqrt(sum((mu_p0-mu_p_prev)^2)) / sqrt(sum((mu_p_prev + 1e-8)^2))
+    #Sigma_change <- norm(as.matrix(Sigma_p0-Sigma_p_prev), type = "F") / (norm(as.matrix(Sigma_p_prev), type = "F") + 1e-8)
+    H_change <- norm(as.matrix(H0-H_prev), type = "F") / (norm(as.matrix(H_prev), type = "F") + 1e-8)
     
     # Print iteration number
     #cat("Iteration:", b, " | mu_change:", round(mu_change, 4), " | Sigma_change:", round(Sigma_change, 4), "\n")
+    cat("Iteration:", b, " | H:", round(H_change, 4), "\n")
+
     
-    # Break condition: if both changes < 5%
-    if (mu_change < 0.05 && Sigma_change < 0.05) {
+    if (H_change < 0.05) {
       cat("Converged after", b, "iterations (changes < 5%)\n")
       break
     }
     
-    # Optional visualization (only if needed)
-    #if (b%%5==1) {
-     # x11()
-    #  par(mfrow = c(4, 2))
-    #  image(t(loadings) %*% Sigma_eps %*% loadings)
-    #  image(Sigma_eps0)
-    #  image(Sigma_p)
-    #  image(Sigma_p0)
-    #  image(as.matrix(mu_p))
-    #  image(as.matrix(mu_p0))
-    #  verteces_display(H, gb)
-    #  verteces_display(H0, pb)
-    #}
-    #print(Sys.time()-t1)
+    print(Sys.time()-t1)
+    ret=list(mu_p = mu_p0, Sigma_p = Sigma_p0, H = H0, Sigma_eps = Sigma_eps0)
   }
-  
-  return(list(mu_p = mu_p0, Sigma_p = Sigma_p0, H = H0, Sigma_eps = Sigma_eps0))
+  return(ret)
 }
+
+

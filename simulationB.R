@@ -1,11 +1,12 @@
 library(FDboost)
 
 setwd("C:/Users/test/OneDrive - Politecnico di Milano/Desktop/BHMixtures/BHMixtures")
+
 source("BHM_simulator.R")
-source("Sampling_p.R")
+source("stan_intro.R")
 source("clr2density.R")
 source("coef_function.R")
-source("update_functions.R")
+source("update_functions_new.R")
 source("EM_updating.R")
 source("second_derivative_fd.R")
 
@@ -20,20 +21,19 @@ library(compositions)
 
 nsim=100
 sd_perc=c(0.01,0.1,0.2,0.5)
-sd0=0.1
+sd0=1
 seed=03072
 m=3
-n=150
+n=500
 k=23
 
 set.seed(seed)
 for(par_id in 1:4){
-  
 param_b=sd_perc[par_id]
-
 for(sim_id in 1:nsim){
     
     F_sample=F_simulator(m=m,n=n,sd_perc=param_b)
+  
     Sigma_eps=F_sample$Sigma_eps
     Sigma_p=F_sample$pF$p$sigma
     mu_p=F_sample$pF$p$mu
@@ -45,16 +45,18 @@ for(sim_id in 1:nsim){
     
     ## Non centred PCA! ##
     # If you have scarsity in data to build the densities, use sparse-principal component
-
+    
+    D=F_sample$pF$H$D
+    D0=F_sample$pF$H$D0
+    
     Cmat <- cov(t(f_coef))
-    A <- D0 + D*1  # try smaller penalty
+    A <- D0 + D*0  # try smaller penalty
     M <- D0 %*% Cmat %*% D0
     
     L <- chol(A)
     Mat <- solve(t(L), M)
     Mat <- solve(L, Mat)
     Mat_fpca <- eigen(Mat)
-    
     
     #D0[i,j]=integral(elem[i]*elem[j])
     loadings=Mat_fpca$vectors
@@ -76,14 +78,13 @@ for(sim_id in 1:nsim){
     D0_pca=t(loadings)%*%D0%*%(loadings)
     
     H0=diag(k)[,1:m]
-    
-    lamH=Mat_fpca$values[1]
 
     EM_sample=EM_updating(f_coef_pca, diag(sd0,k,k), H0 , rep(0,m-1), diag(1,m-1,m-1), 
-                          B=50,D=D_pca,lambdaS=1,lambdaH=10^-2,gb=get_basis,pb=pca_basis)
+                          B=50,D=D_pca,lambdaS=1,lambdaH=0,gb=get_basis,pb=pca_basis,det_rate = 0.2)
     
-    save(EM_sample,pca_basis,F_sample,get_basis, file = paste("simB_sim",sim_id,"par",param_b,"seed",seed,".rdata"))
+    save(EM_sample,pca_basis,F_sample,get_basis, file = paste("C:/Users/test/OneDrive - Politecnico di Milano/Desktop/BHMixtures/Sim_B/simB_sim",sim_id,"par",param_b,"seed",seed,".rdata"))
     print(sim_id)
+    
     }
 }
 

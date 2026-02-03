@@ -1,11 +1,15 @@
 library(FDboost)
 
+
+setwd("C:/Users/test/OneDrive - Politecnico di Milano/Desktop/BHMixtures/BHMixtures")
+
 source("BHM_simulator.R")
-source("Sampling_p.R")
+source("stan_intro.R")
 source("clr2density.R")
 source("coef_function.R")
-source("update_functions.R")
+source("update_functions_new.R")
 source("EM_updating.R")
+source("second_derivative_fd.R")
 
 
 ############## examples #################
@@ -24,10 +28,11 @@ k=23
 
 seed=03072
 set.seed(seed)
-for(par_id in 4){
+for(par_id in 1:4){
+  m=m_params[par_id]
+  param_a=m_params[par_id]
   for(sim_id in 1:nsim){
-    m=m_params[par_id]
-    param_a=m_params[par_id]
+
     F_sample=F_simulator(m=param_a,n=n,sd_perc=0.01)
     
     Sigma_eps=F_sample$Sigma_eps
@@ -46,7 +51,7 @@ for(par_id in 4){
     D0=F_sample$pF$H$D0
     
     Cmat <- cov(t(f_coef))
-    A <- D0 + D*1  # try smaller penalty
+    A <- D0 + D*0  # try smaller penalty
     M <- D0 %*% Cmat %*% D0
     
     L <- chol(A)
@@ -79,7 +84,7 @@ for(par_id in 4){
     EM_sample=EM_updating(f_coef_pca, diag(sd0,k,k), H0 , rep(0,m-1), diag(1,m-1,m-1), 
                           B=100,D=D_pca,lambdaS=1,lambdaH=0.1,gb=get_basis,pb=pca_basis)
     
-    save(EM_sample,pca_basis,F_sample,get_basis, file = paste("simA_sim",sim_id,"par",param_a,"seed",seed,".rdata"))
+    save(EM_sample,pca_basis,F_sample,get_basis, file = paste("C:/Users/test/OneDrive - Politecnico di Milano/Desktop/BHMixtures/Sim_A/simA_sim",sim_id,"par",param_a,"seed",seed,".rdata"))
   }
 }
 

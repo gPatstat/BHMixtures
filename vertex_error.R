@@ -19,6 +19,8 @@ min_perm_H1 <- function(H1, H2) {
     }
   }
   
+  cost=t(cost)
+  
   # Solve linear sum assignment problem
   perm <- clue::solve_LSAP(cost)
   

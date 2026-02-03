@@ -1,5 +1,4 @@
-second_derivative_fd <- function(fx) {
-  x=domain
+second_derivative_fd <- function(fx,x) {
   dx <- diff(x)
   if (max(dx) - min(dx) > 1e-8)
     stop("x is not evenly spaced. Use the spline method instead.")
