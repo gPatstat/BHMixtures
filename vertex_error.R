@@ -1,4 +1,7 @@
 
+
+library(clue)
+
 min_perm_H1 <- function(H1, H2) {
   if (!requireNamespace("clue", quietly = TRUE)) {
     stop("Install package 'clue': install.packages('clue')")
@@ -29,14 +32,17 @@ min_perm_H1 <- function(H1, H2) {
 }
 
 vertex_reorder=function(H_est,H_true){
+
   perm <- min_perm_H1(H_est, H_true)
+
   H_est_perm <- H_est[, perm]
   return(H_est_perm)
 }
 
 error_vertex=function(H_est,H_true){
   H_est=vertex_reorder(H_est,H_true)
-  fr_err=sqrt(sum(w*(H_est-H_true)^2/dim(H_est)[2]))
+  #fr_err=sum(w*(H_est-H_true)^2)/dim(H_est)[2]
+  fr_err=(1/dim(H_est)[2])*sum(sqrt(colSums((H_est-H_true)^2)*w))
   return(fr_err)
 }
 

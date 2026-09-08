@@ -11,7 +11,6 @@ source("EM_updating.R")
 source("second_derivative_fd.R")
 
 ############## examples #################
-#set.seed(03071)
 
 # Parameters to vary:
 # Simulation B
@@ -19,20 +18,21 @@ source("second_derivative_fd.R")
 
 library(compositions)
 
-nsim=100
+nsim=50
 sd_perc=c(0.01,0.1,0.2,0.5)
-sd0=1
-seed=03072
+seed0=03072
 m=3
 n=500
 k=23
+sd0=1
 
-set.seed(seed)
+
 for(par_id in 1:4){
-param_b=sd_perc[par_id]
 for(sim_id in 1:nsim){
-    
-    F_sample=F_simulator(m=m,n=n,sd_perc=param_b)
+    param_a=sd_perc[par_id]
+    seed=seed0+sim_id*10^5
+    set.seed(seed)
+    F_sample=F_simulator(m=m,n=n,sd_perc=param_a)
   
     Sigma_eps=F_sample$Sigma_eps
     Sigma_p=F_sample$pF$p$sigma
@@ -58,7 +58,6 @@ for(sim_id in 1:nsim){
     Mat <- solve(L, Mat)
     Mat_fpca <- eigen(Mat)
     
-    #D0[i,j]=integral(elem[i]*elem[j])
     loadings=Mat_fpca$vectors
     
     pca_basis=get_basis%*%loadings
@@ -67,9 +66,6 @@ for(sim_id in 1:nsim){
       norm_const=sqrt(sum(pca_basis[,j]^2)*w)
       pca_basis[,j]=pca_basis[,j]/norm_const
       loadings[,j]=loadings[,j]/norm_const
-      #for(i in 1:n){
-      #  f_coef_pca[j,i]=w*t(pca_basis[,j])%*%(get_basis)%*%f_coef[,i] #(1x100)x(100x23)x(23x1)
-      #}
     }
     
     f_coef_pca=solve(loadings)%*%f_coef
@@ -79,34 +75,15 @@ for(sim_id in 1:nsim){
     
     H0=diag(k)[,1:m]
 
-    EM_sample=EM_updating(f_coef_pca, diag(sd0,k,k), H0 , rep(0,m-1), diag(1,m-1,m-1), 
+    EM_sample=tryCatch({EM_updating(f_coef_pca, diag(sd0,k,k), H0 , rep(0,m-1), diag(1,m-1,m-1), 
                           B=50,D=D_pca,lambdaS=1,lambdaH=0,gb=get_basis,pb=pca_basis,det_rate = 0.2)
     
-    save(EM_sample,pca_basis,F_sample,get_basis, file = paste("C:/Users/test/OneDrive - Politecnico di Milano/Desktop/BHMixtures/Sim_B/simB_sim",sim_id,"par",param_b,"seed",seed,".rdata"))
+    },
+    error = function(e) {
+      message("Errors at iteration", sim_id, ": ", e$message)
+      NA   
+    })
+    save(EM_sample,pca_basis,F_sample,get_basis, file = paste("C:/Users/test/OneDrive - Politecnico di Milano/Desktop/BHMixtures/Sim_A/simA_sim",sim_id,"par",param_a,"seed",seed,".rdata"))
     print(sim_id)
-    
     }
 }
-
-sd_perc=c(0.01,0.1,0.2,0.5)
-
-seed=03072
-set.seed(seed)
-
-sim_id=100
-x11()
-par(mfrow=c(4,2))
-for(par_id in 1:4){
-  param_b=sd_perc[par_id]
-  load(paste("simB_sim",sim_id,"par",param_b,"seed",seed,".rdata"))
-  verteces_display(F_sample$pF$H$coefs, get_basis, main=paste("True vertices with par_B=",sd_perc[par_id]),ylim=c(0,4))
-  verteces_display(EM_sample$H,pca_basis, main=paste("Estimated vertices with par_B=",sd_perc[par_id]),ylim=c(0,4))
-  print(min_perm_H1(pca_basis%*%EM_sample$H,get_basis%*%F_sample$pF$H$coefs))
-  #H2=F_sample$pF$H$coefs%*%pca_basis%*%F_sample$pF$H$coefs
-  #print(c(error_vertex(EM_sample$H,H2)/(nsim*4),param_b))
-  #mu_true=as.matrix(t(F_sample$pF$p$mu))
-  #mu_p=as.matrix(t(EM_sample$mu_p))
-  #image(as.matrix(ilrInv(mu_true)))
-  #image(as.matrix(ilrInv(mu_p)))
-}
- 

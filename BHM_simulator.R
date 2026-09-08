@@ -17,6 +17,7 @@ library(FDboost)
 library(compositions)
 
 dom=seq(0,1,length.out=100)
+w=dom[2]-dom[1]
 simcoef=function(a,b,dm=dom,B=100){
   
   stopifnot(is.numeric(dm), length(dm) >= 2)
@@ -77,7 +78,7 @@ H_simulator <- function(m,k=23){
 }
 
 
-verteces_display <- function(H, get_basis,add=F,ylim=NULL,main="Densities"){
+verteces_display <- function(H, get_basis,add=F,ylim=NULL,main="Densities",xaxt = NULL, yaxt = NULL){
   k=dim(H)[1]
   library(FDboost)
   library(MASS)
@@ -86,7 +87,8 @@ verteces_display <- function(H, get_basis,add=F,ylim=NULL,main="Densities"){
   #clr basis dim: 100 x k
   clrs=get_basis%*%H
   densities=clr2density(clrs,w=w)
-  matplot(dom,densities,type="l",main=main,add=add,ylim=ylim,lty=1,lwd=2)
+  matplot(dom,densities,type="l",main=main,add=add,ylim=ylim,lty=1:k,lwd=2,
+          col="black", xaxt=xaxt,yaxt=yaxt)
 }
 
 
